@@ -1,0 +1,23 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { registerSchema } from "@/lib/validations";
+import bcrypt from "bcryptjs";
+
+export async function createUser(formData: FormData) {
+  const rawData = Object.fromEntries(formData.entries());
+
+  const validated = registerSchema.parse(rawData);
+
+  const hashedPassword = await bcrypt.hash(validated.password, 12);
+
+  const user = await prisma.user.create({
+    data: {
+      email: validated.email,
+      password: hashedPassword,
+      name: validated.name,
+    },
+  });
+
+  return { success: true, userId: user.id };
+}
